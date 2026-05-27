@@ -8,7 +8,7 @@ pygame.init()
 
 LARGURA, ALTURA = 800, 600
 tela = pygame.display.set_mode((LARGURA, ALTURA))
-pygame.display.set_caption("Greyboxing 1 - Teste de Mouse e Filtro Local")
+pygame.display.set_caption("Greyboxing 2 - Teste de Mouse e Filtro Local")
 relogio = pygame.time.Clock()
 
 # Cores de teste

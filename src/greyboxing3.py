@@ -10,7 +10,7 @@ pygame.font.init()  # Inicializa o sistema de fontes para escrever no botão
 # Configurações da janela de teste
 LARGURA, ALTURA = 800, 600
 tela = pygame.display.set_mode((LARGURA, ALTURA))
-pygame.display.set_caption("Greyboxing 1 - Teste de Botão com Mouse")
+pygame.display.set_caption("Greyboxing 3 - Teste de Botão com Mouse")
 relogio = pygame.time.Clock()
 
 # Fonte para o texto do botão
