@@ -7,6 +7,7 @@ class LupaFiltro:
     def __init__(self, raio=90):
         self.raio = raio
         self.ativo = False  # Controla se a lupa está ligada ou desligada
+        self.invertida = False  # Quando True, inverte a região que recebe o efeito
 
     def aplicar_lente_local(self, matriz_cena, mouse_pos, botoes_lens):
         """
@@ -46,14 +47,18 @@ class LupaFiltro:
         if botoes_lens[5]["ativo"]: 
             imagem_filtrada_local = cv2.bitwise_not(imagem_filtrada_local)
 
-        # 4. O SEGREDO DA ROI: Onde a máscara for 255 (dentro do círculo), usa a imagem com filtro.
-        # Onde for 0 (fora do círculo), mantém a imagem original intacta.
-        cena_composta = np.where(mascara[:, :, None] == 255, imagem_filtrada_local, matriz_cena)
+        # 4. O SEGREDO DA ROI: no modo normal, o círculo recebe o efeito;
+        # no modo invertido, o círculo fica limpo e o efeito vai para fora.
+        if self.invertida:
+            cena_composta = np.where(mascara[:, :, None] == 255, matriz_cena, imagem_filtrada_local)
+        else:
+            cena_composta = np.where(mascara[:, :, None] == 255, imagem_filtrada_local, matriz_cena)
 
         return cena_composta
 
     def desenhar_contorno_hud(self, superficie_pygame, mouse_pos, altura_limite):
         """Desenha a bordinha sutil da lupa para o jogador ver onde ela está na tela."""
         if self.ativo and mouse_pos[1] < altura_limite:
-            # Desenha um círculo de contorno branco com 2px de espessura
-            pygame.draw.circle(superficie_pygame, (255, 255, 255), mouse_pos, self.raio, 2)
+            # Desenha um círculo de contorno diferente quando a lupa está invertida
+            cor_contorno = (255, 120, 0) if self.invertida else (255, 255, 255)
+            pygame.draw.circle(superficie_pygame, cor_contorno, mouse_pos, self.raio, 2)

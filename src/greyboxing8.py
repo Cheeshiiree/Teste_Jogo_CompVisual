@@ -14,7 +14,7 @@ import logger_pdi as logg
 pygame.init()
 pygame.font.init()
 
-# RESOLUÇÃO EXPANDIDA (Estilo HD para caber todo o design do Tldraw)
+# RESOLUÇÃO EXPANDIDA 
 LARGURA, ALTURA = 1280, 720
 tela = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption("Greyboxing 8 - Central de Filtros Avançada")
@@ -142,7 +142,7 @@ sliders = [
     SliderHUD("Saturação", 580, 650, 160)
 ]
 
-nomes_filtros = ["Cinza", "Sobel (Linhas)", "Desfocar (Blur)", "Ruído S&P", "Filtro Mediana", "Inverter", "Modo Lupa", "Reset Global"]
+nomes_filtros = ["Cinza", "Sobel (Linhas)", "Desfocar (Blur)", "Ruído S&P", "Filtro Mediana", "Inverter", "Modo Lupa", "Inv Lupa", "Reset Global"]
 botoes_lens = []
 for i, nome in enumerate(nomes_filtros):
     col, lin = i % 4, i // 4
@@ -184,11 +184,28 @@ while True:
                 # 3. Clique nos Filtros da Seção LENS
                 for btn in botoes_lens:
                     if btn["rect"].collidepoint(pos_mouse):
-                        if btn["id"] == 7: # Alterar o reset como estava antes não globalmente mas retornado os sliders e desativando os efeitos
-                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_z))
+                        if btn["id"] == 6: # Botão para ligar/desligar a lupa
+                            btn["ativo"] = not btn["ativo"]
+                            lupa_cv.ativo = btn["ativo"]
+                        elif btn["id"] == 7: # Botão para inverter o efeito da lupa
+                            btn["ativo"] = not btn["ativo"]
+                            lupa_cv.invertida = btn["ativo"]
+                        elif btn["id"] == 8: # Botão de Reset (efeitos e sliders)
+                            # Reseta os fatores globais de cor
+                            fator_global_r, fator_global_g, fator_global_b = 1.0, 1.0, 1.0
+                            
+                            # Desativa todos os filtros de tela cheia e a lupa
+                            for b in botoes_lens:
+                                b["ativo"] = False
+                            lupa_cv.ativo = False
+                            lupa_cv.invertida = False
+                            
+                            # Reseta os sliders para seus valores padrão (meio)
+                            for s in sliders:
+                                s.valor = 0.5
+                                s.atualizar(pos_mouse) # Atualiza a posição do cursor do slider
                         else:
-                            btn["ativo"] = not btn["ativo"] # Adicinar a opção de inverter o estado para filtro na lupa ou a lupa para limpar o filtro ativo na cena
-                            if btn["id"] == 6: lupa_cv.ativo = btn["ativo"]
+                            btn["ativo"] = not btn["ativo"]
 
                 # 4. Clique na Tela de Jogo (Seleção de Formas)
                 if RETANGULO_JOGO.collidepoint(pos_mouse):
@@ -374,6 +391,8 @@ while True:
     tela.blit(FONTE_M.render("LENS (Filtros & Ruídos)", True, (0, 128, 255)), (20, 495))
     for btn in botoes_lens:
         cor = (0, 128, 255) if btn["ativo"] else ((70, 70, 80) if btn["rect"].collidepoint(pos_mouse) else (40, 40, 45))
+        if btn["id"] == 7 and lupa_cv.invertida:
+            cor = (255, 120, 0)
         pygame.draw.rect(tela, cor, btn["rect"], border_radius=4)
         pygame.draw.rect(tela, (90, 90, 100), btn["rect"], width=1, border_radius=4)
         txt_n = FONTE_P.render(btn["nome"][:8], True, (255, 255, 255))

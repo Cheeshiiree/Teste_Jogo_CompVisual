@@ -15,7 +15,7 @@ relogio = pygame.time.Clock()
 # 2. Criação de Elementos Gráficos Simples para o Teste
 # Um fundo escuro e um bloco camuflado (baixo contraste) para simular o Desafio 1
 COR_FUNDO = (20, 20, 20)
-COR_BLOCO_OCULTO = (20, 20, 20)  # Quase invisível no fundo escuro
+COR_BLOCO_OCULTO = (21, 21, 21)  # Quase invisível no fundo escuro
 COR_PLAYER_TESTE = (0, 255, 0)     # Quadrado verde para o player
 QUADRADO_VERMELHO = (255, 0, 0)            # Quadrado vermelho para teste de contraste
 
@@ -61,7 +61,7 @@ while True:
     # Desenha o player (quadrado verde)
     pygame.draw.rect(tela, COR_PLAYER_TESTE, (player_x, player_y, 40, 40))
 
-    # 4. O PULO DO GATO: Captura do Buffer da Tela para Computação Visual
+    # 4. Captura do Buffer da Tela para Computação Visual
     if aplicar_filtro_cinza:
         # Captura os pixels da tela do Pygame como uma matriz 3D (X, Y, RGB)
         pixel_array = pygame.surfarray.array3d(tela)
@@ -72,7 +72,7 @@ while True:
         # OpenCV trabalha por padrão em BGR, então convertemos de RGB para BGR
         imagem_bgr = cv2.cvtColor(matriz_imagem, cv2.COLOR_RGB2BGR)
         
-        # EXEMPLO DE PROCESSO: Transforma a imagem da tela inteira em Tons de Cinza
+        # Transforma a imagem da tela inteira em Tons de Cinza
         imagem_processada_bgr = cv2.cvtColor(imagem_bgr, cv2.COLOR_BGR2GRAY)
         
         # Converte de volta para RGB para o Pygame conseguir exibir

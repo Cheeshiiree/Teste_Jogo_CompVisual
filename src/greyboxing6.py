@@ -19,13 +19,12 @@ try:
     hicon = win32gui.LoadImage(
         0, 
         "assets/sprites/misc/icone_barraTarefas.png", 
-        win32con.IMAGE_ICON, 
+        win32con.IMAGE_ICON, #Ainda falta teste fora da execução, supostamente deve funcionar com o .exe
         0, 0, 
         win32con.LR_LOADFROMFILE | win32con.LR_DEFAULTSIZE
     )
     
-    # Usando hash() nós extraímos o ID numérico inteiro puro do handle.
-    # Isso engana o Pylance perfeitamente porque hash() sempre retorna um 'int' válido!
+    # Usando hash() nós extraímos o ID numérico inteiro puro do handle. 
     hicon_int = hash(hicon)
     
     # Envia a mensagem para o Windows aplicar o troféu na Barra de Tarefas
@@ -35,9 +34,9 @@ except Exception as e:
 
 # 2. Inicialização e Configurações Básicas do Pygame
 pygame.init()
-pygame.font.init()
+pygame.font.init() # Possibilita o uso de textos e fontes personalizadas no jogo
 
-LARGURA, ALTURA = 800, 600
+LARGURA, ALTURA = 800, 600 # Resolução da janela do jogo
 tela = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption("Greyboxing 6 - Interface, HUD Fixa e Câmera")
 relogio = pygame.time.Clock()
@@ -45,7 +44,7 @@ relogio = pygame.time.Clock()
 FONTE_HUD = pygame.font.SysFont("Arial", 18, bold=True)
 FONTE_SPLASH = pygame.font.SysFont("Arial", 40, bold=True)
 
-# 3. Configuração do Ícone da Barra de Título (Fantasminha Laranja) pelo Pygame
+# 3. Configuração do Ícone da Barra de Título pelo Pygame
 try:
     icone_fantasma = pygame.image.load("assets/sprites/misc/icon_janela.png")
     pygame.display.set_icon(icone_fantasma)
@@ -60,7 +59,7 @@ COR_TEXTO = (255, 255, 255)
 # FUNÇÃO DA SPLASH SCREEN (Tela Inicial Customizada)
 # ---------------------------------------------------------
 def ExecutarSplashScreen():
-    """Mostra uma tela de carregamento com a imagem da caixa por 3 segundos ou até clicar"""
+    """Mostra uma tela de carregamento com a imagem da caixa por 10 segundos ou até clicar"""
     tempo_inicial = pygame.time.get_ticks()
     
     logo_splash = None
@@ -71,7 +70,7 @@ def ExecutarSplashScreen():
 
     mostrando_splash = True
     while mostrando_splash:
-        if pygame.time.get_ticks() - tempo_inicial > 3000:
+        if pygame.time.get_ticks() - tempo_inicial > 10000:
             mostrando_splash = False
 
         for evento in pygame.event.get():
@@ -79,9 +78,10 @@ def ExecutarSplashScreen():
                 pygame.quit()
                 sys.exit()
             if evento.type == pygame.MOUSEBUTTONDOWN or evento.type == pygame.KEYDOWN:
-                mostrando_splash = False
+                mostrando_splash = False # Permite pular a splash screen com clique ou tecla
 
-        tela.fill((15, 15, 20)) # Fundo escuro para destacar a arte
+        # tela.fill((15, 15, 20)) # Fundo escuro para destacar a arte
+        tela.fill((200, 200, 200)) # Fundo claro para destacar a arte
         
         if logo_splash:
             rect_logo = logo_splash.get_rect(center=(LARGURA // 2, ALTURA // 2))
@@ -146,6 +146,10 @@ while True:
         player_x -= player_velocidade
     if teclas[pygame.K_RIGHT]:
         player_x += player_velocidade
+    if teclas[pygame.K_UP] and player_y > 0:
+        player_y -= player_velocidade # Controle vertical do jogador (pulo ou voo)
+    if teclas[pygame.K_DOWN] and player_y < ALTURA - player_altura:
+        player_y += player_velocidade # Teste de movimento vertical para descida antes de implementar gravidade
 
     # Sistema de Câmera Dinâmica (Sidescrolling)
     if player_x > LARGURA // 2:
@@ -167,14 +171,16 @@ while True:
     # --- CAMADA 2: HUD fixa na janela (Ignora a Câmera) ---
     # Painel superior escuro
     pygame.draw.rect(tela, (20, 20, 25), (0, 0, LARGURA, 80))
-    pygame.draw.rect(tela, (0, 128, 255), (0, 78, LARGURA, 2)) # Divisória azul neon
+    pygame.draw.rect(tela, (0, 128, 255), (0, 78, LARGURA, 2)) # Divisória azul 
 
     # Renderização dos textos estáticos da HUD
     txt_pos = FONTE_HUD.render(f"Posição no Mundo: {player_x}m", True, COR_TEXTO)
+    txt_pos_y = FONTE_HUD.render(f"Posição no Mundo: {player_y}m", True, COR_TEXTO)
     txt_cam = FONTE_HUD.render(f"Deslocamento Câmera: {camera_x}px", True, (150, 150, 150))
     txt_int = FONTE_HUD.render(f"Cliques no Botão: {interacoes}", True, COR_TEXTO)
     
     tela.blit(txt_pos, (20, 15))
+    tela.blit(txt_pos_y, (20, 30))
     tela.blit(txt_cam, (20, 45))
     tela.blit(txt_int, (320, 30))
 
@@ -189,7 +195,7 @@ while True:
     pygame.draw.rect(tela, cor_botao, RETANGULO_BOTAO, border_radius=6)
     pygame.draw.rect(tela, (100, 100, 110), RETANGULO_BOTAO, width=2, border_radius=6) # Contorno sutil
 
-    texto_btn = "Filtro CV: ATIVO" if filtro_ativo else "Filtro CV: INATIVO"
+    texto_btn = "ATIVO" if filtro_ativo else "INATIVO"
     txt_btn_surface = FONTE_HUD.render(texto_btn, True, COR_TEXTO)
     tela.blit(txt_btn_surface, (RETANGULO_BOTAO.x + 18, RETANGULO_BOTAO.y + 10))
 

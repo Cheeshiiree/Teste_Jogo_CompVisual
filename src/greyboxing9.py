@@ -12,13 +12,24 @@ pygame.font.init()
 
 LARGURA, ALTURA = 800, 600
 tela = pygame.display.set_mode((LARGURA, ALTURA))
-pygame.display.set_caption("Greyboxing 8 - Central de PDI e Transformações")
+pygame.display.set_caption("Greyboxing 9 - Central de PDI e Transformações")
 relogio = pygame.time.Clock()
 
 FONTE_P_NEGRITO = pygame.font.SysFont("Arial", 14, bold=True)
 FONTE_M_NEGRITO = pygame.font.SysFont("Arial", 18, bold=True)
 
-# 2. Definição das Regiões do Layout (Baseado no esboço do Tldraw)
+# Configuração do Ícone da Barra de Título pelo Pygame
+try:
+    icone_fantasma = pygame.image.load("assets/sprites/misc/icon_janela.png")
+    pygame.display.set_icon(icone_fantasma)
+except pygame.error:
+    print("Aviso: Fantasminha não encontrado em 'assets/sprites/misc/icon_janela.png'. Usando padrão.")
+
+# Adição de um botão superior para abrir uma janela do menu do jogo
+# Opções do menu: "Reiniciar Cenário", "Como Jogar", "Configurações", "Sobre", "Conceitos Utilizados", "Sair do Jogo"
+# Para manter a modularidade essas opções serão implementadas em outros arquivos e chamados aqui via funções específicas (ex: ExecutarMenuConfigurações(), ExecutarMenuSobre(), etc)
+
+# 2. Definição das Regiões do Layout 
 RETANGULO_JOGO = pygame.Rect(0, 0, 800, 400)          # Área das formas (Topo)
 PANEL_CONTROLE = pygame.Rect(0, 400, 800, 200)         # Painel inferior completo
 RETANGULO_LENS = pygame.Rect(0, 400, 280, 200)         # Seção de botões de filtros
