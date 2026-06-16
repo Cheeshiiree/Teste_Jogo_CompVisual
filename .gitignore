@@ -4,3 +4,6 @@ venv/
 historico_pdi.json
 /src/__pycache__
 *.rar
+/build
+/dist
+/src/__pycache__

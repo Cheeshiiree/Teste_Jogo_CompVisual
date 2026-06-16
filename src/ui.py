@@ -57,7 +57,7 @@ class MenuUI:
         renderizar_botao(self.btn_iniciar, "Iniciar Sandbox", (0, 128, 255), pos_mouse)
         renderizar_botao(self.btn_como_jogar, "Como Jogar", (0, 180, 120), pos_mouse)
         renderizar_botao(self.btn_config, "Configurações", (100, 100, 110), pos_mouse)
-        renderizar_botao(self.btn_sobre, "Sobre / Autores", (255, 215, 0), pos_mouse)
+        renderizar_botao(self.btn_sobre, "Sobre", (255, 215, 0), pos_mouse)
         renderizar_botao(self.btn_conceitos, "Conceitos e Códigos", (150, 50, 200), pos_mouse)
         renderizar_botao(self.btn_sair, "Sair do Programa", (220, 50, 50), pos_mouse)
 
@@ -96,7 +96,9 @@ class MenuUI:
         superficie.fill((15, 15, 18))
         txt = self.fonte_titulo.render("CONFIGURAÇÕES", True, (130, 130, 140))
         superficie.blit(txt, ((self.largura // 2) - txt.get_width() // 2, 80))
-        
+        # essa parte pode ficar no como jogar
+        # Aqui deveriam ficar as configurações mesmo tipo volume, mute e ajustar tamanho da tela caso em 
+        # alguma maquina fique desconfigurado
         info = [
             "Resolução Ativa do Projeto: 1280 x 720 (Padrão HD Estável)",
             "Pipeline de Renderização: Matrizes NumPy e Superfícies Pygame (Foco em CPU)",
@@ -124,11 +126,13 @@ class MenuUI:
             "Disciplina: COM242 — Computação Visual / Processamento Digital de Imagens",
             "--------------------------------------------------------------------------------------------------------",
             "Desenvolvido por:",
-            "• Anna Beatryz Costa (ABC) — Monitoria e Desenvolvimento de Software",
-            "& Integrantes do Grupo de Desenvolvimento de PDI",
+            "• Anna Beatryz Costa (ABC) — 2025007883",
+            "• Emilly Vitória Pereira da Silva — 2023008676",
+            "• Julia Barcellos Paiva — 2022010393",
+            "• Rafaela Cristina de Moraes Mendes - 2024009453".
             "--------------------------------------------------------------------------------------------------------",
             "Finalidade: Aplicação prática interdisciplinar demonstrando a unificação de filtros espaciais,",
-            "transformações geométricas tridimensionais manuais e análise estatística de histogramas lineares."
+            "transformações geométricas tridimensionais manuais e análise estatística de histogramas."
         ]
         y = 180
         for d in dados:

@@ -25,16 +25,17 @@ Antes de executar o projeto no VS Code, certifique-se de ter o Python instalado 
 ```bash
 #git clone [https://github.com/Cheeshiiree/Vision-Quest.git](https://github.com/Cheeshiiree/Vision-Quest.git)
 #cd Vision-Quest
-git clone [https://github.com/Cheeshiiree/Teste_Jogo_CompVisual.git](https://github.com/Cheeshiiree/Teste_Jogo_CompVisual.git)
-cd Teste_Jogo_CompVisual
+#git clone [https://github.com/Cheeshiiree/Teste_Jogo_CompVisual.git](https://github.com/Cheeshiiree/Teste_Jogo_CompVisual.git)
+#cd Teste_Jogo_CompVisual
 ```
 
-### 2. Criar um Ambiente Virtual (opcional, mas recomendado)
+###2. Criar um Ambiente Virtual (opcional, mas recomendado)
 ```bash
 python -m venv venv
 source venv/bin/activate  # No Windows: venv\Scripts\activate
 ```
-### 3. Instalar as Dependências
+
+###3. Instalar as Dependências
 Instale os pacotes sugeridos pelas diretrizes através do terminal:  Bash
 ```bash
 pip install pygame PyOpenGL opencv-python numpy scikit-image
