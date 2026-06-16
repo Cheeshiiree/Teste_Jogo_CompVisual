@@ -1,5 +1,7 @@
 import pygame
 import random
+import glob
+import os
 import sys
 import numpy as np
 import cv2
@@ -13,10 +15,16 @@ import histograma as hst
 import logger_pdi as logg
 import inserir_imagens as ins_img
 import sobel_manual as sm
+import filtros_manuais as fm
 import ui  # Importa o painel UI 
 
 pygame.init()
 pygame.font.init()
+try:
+    pygame.mixer.init()
+    AUDIO_DISPONIVEL = True
+except pygame.error:
+    AUDIO_DISPONIVEL = False
 
 # RESOLUÇÃO 
 LARGURA, ALTURA = 1280, 720
@@ -48,7 +56,60 @@ lupa_cv = fl.LupaFiltro(raio=90)
 histograma_cv = hst.HistogramaInterativo(x=1065, y=535, largura=200, altura=130)
 gerenciador_menu = ui.MenuUI(LARGURA, ALTURA)
 
-COR_FUNDO = (20, 20, 22)
+BGM_END_EVENT = pygame.USEREVENT + 1
+FAIXAS_BGM = sorted(glob.glob(os.path.join("assets", "bgm", "*.ogg")))
+indice_bgm_atual = 0
+ultima_resolucao_aplicada = (LARGURA, ALTURA)
+ultimo_volume_aplicado = None
+ultimo_mute_aplicado = None
+ultimo_tema_aplicado = gerenciador_menu.tema_claro
+
+def aplicar_configuracoes_menu():
+    global tela, LARGURA, ALTURA, RETANGULO_JOGO, PANEL_CONTROLE, matriz_fundo_original
+    global ultima_resolucao_aplicada, ultimo_volume_aplicado, ultimo_mute_aplicado, ultimo_tema_aplicado
+
+    nova_resolucao = gerenciador_menu.obter_resolucao_atual()
+    if nova_resolucao != ultima_resolucao_aplicada:
+        LARGURA, ALTURA = nova_resolucao
+        tela = pygame.display.set_mode((LARGURA, ALTURA))
+        RETANGULO_JOGO = pygame.Rect(0, 0, LARGURA, ALTURA_JOGO)
+        PANEL_CONTROLE = pygame.Rect(0, ALTURA_JOGO, LARGURA, ALTURA - ALTURA_JOGO)
+        gerenciador_menu.recalcular_layout(LARGURA, ALTURA)
+        histograma_cv.rect_area = pygame.Rect(max(1065, LARGURA - 215), 535, 200, 130)
+        matriz_fundo_original = ins_img.carregar_background_pdi(caminho_padrao, LARGURA, ALTURA_JOGO)
+        ultima_resolucao_aplicada = nova_resolucao
+
+    if AUDIO_DISPONIVEL and FAIXAS_BGM:
+        volume_atual = 0.0 if gerenciador_menu.musica_mutada else gerenciador_menu.volume_musica
+        if (volume_atual != ultimo_volume_aplicado) or (gerenciador_menu.musica_mutada != ultimo_mute_aplicado):
+            pygame.mixer.music.set_volume(volume_atual)
+            ultimo_volume_aplicado = volume_atual
+            ultimo_mute_aplicado = gerenciador_menu.musica_mutada
+
+    if gerenciador_menu.tema_claro != ultimo_tema_aplicado:
+        ultimo_tema_aplicado = gerenciador_menu.tema_claro
+
+def tocar_bgm(indice=0):
+    global indice_bgm_atual
+    if not AUDIO_DISPONIVEL or not FAIXAS_BGM:
+        return
+
+    indice = indice % len(FAIXAS_BGM)
+    indice_bgm_atual = indice
+    try:
+        pygame.mixer.music.load(FAIXAS_BGM[indice])
+        pygame.mixer.music.set_volume(0.0 if gerenciador_menu.musica_mutada else gerenciador_menu.volume_musica)
+        pygame.mixer.music.play(0)
+        pygame.mixer.music.set_endevent(BGM_END_EVENT)
+    except pygame.error as erro:
+        print(f"Aviso: não foi possível tocar BGM. Detalhes: {erro}")
+
+def tocar_proxima_bgm():
+    if not FAIXAS_BGM:
+        return
+    tocar_bgm(indice_bgm_atual + 1)
+
+tocar_bgm(0)
 
 # CARREGAMENTO AUTOMÁTICO DO CENÁRIO PADRÃO (Classroom 11)
 caminho_padrao = "assets/sprites/misc/Classroom 11.png"
@@ -304,13 +365,17 @@ sliders = [
     SliderHUD("Saturação", 580, 650, 160)
 ]
 
-nomes_filtros = ["Cinza", "Sobel Biblioteca", "Desfocar", "S&P", "Mediana", "Inverter", "Modo Lupa", "Inv Lupa", "Img Fundo", "Reset", "Sobel Manual"]
+nomes_filtros = [
+    "Cinza", "Sobel OpenCV", "Desfocar", "S&P", "Mediana", "Inverter", 
+    "Modo Lupa", "Inv Lupa", "Img Fundo", "Reset", 
+    "Sobel Man", "Pixelar", "Ruído RGB"
+]
 botoes_lens = []
 for i, nome in enumerate(nomes_filtros):
     col, lin = i % 4, i // 4
     bx = 20 + (col * 80)
-    by = 530 + (lin * 48)  
-    botoes_lens.append({"id": i, "nome": nome, "rect": pygame.Rect(bx, by, 72, 42), "ativo": False})
+    by = 525 + (lin * 38)  
+    botoes_lens.append({"id": i, "nome": nome, "rect": pygame.Rect(bx, by, 74, 32), "ativo": False})
 
 fator_global_r, fator_global_g, fator_global_b = 1.0, 1.0, 1.0
 matriz_cena = np.zeros((ALTURA_JOGO, LARGURA, 3), dtype=np.uint8)
@@ -326,6 +391,10 @@ while True:
         if evento.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+
+        if evento.type == BGM_END_EVENT:
+            tocar_proxima_bgm()
+            continue
 
         if evento.type == MOUSEBUTTONDOWN:
             if evento.button == 1:
@@ -365,12 +434,32 @@ while True:
                             for s in sliders:
                                 s.valor = 0.5
                                 s.rect_cursor.x = s.rect_linha.x + int(s.rect_linha.width * 0.5) - 6
-                        elif btn["id"] == 1:  
+                        
+                        # -----------------------------------------------------
+                        # 🛡️ TRAVAS DE EXCLUSIVIDADE MÚTUA (Biblioteca x Manual)
+                        # -----------------------------------------------------
+                        elif btn["id"] == 1:  # Sobel OpenCV
                             btn["ativo"] = not btn["ativo"]
                             if btn["ativo"]: botoes_lens[10]["ativo"] = False
-                        elif btn["id"] == 10: 
+                        elif btn["id"] == 10: # Sobel Manual
                             btn["ativo"] = not btn["ativo"]
                             if btn["ativo"]: botoes_lens[1]["ativo"] = False
+                            
+                        elif btn["id"] == 2:  # Desfocar OpenCV
+                            btn["ativo"] = not btn["ativo"]
+                            if btn["ativo"]: botoes_lens[11]["ativo"] = False
+                        elif btn["id"] == 11: # Pixelar Manual
+                            btn["ativo"] = not btn["ativo"]
+                            if btn["ativo"]: botoes_lens[2]["ativo"] = False
+                            
+                        elif btn["id"] == 3:  # S&P OpenCV
+                            btn["ativo"] = not btn["ativo"]
+                            if btn["ativo"]: botoes_lens[12]["ativo"] = False
+                        elif btn["id"] == 12: # Ruído RGB Manual
+                            btn["ativo"] = not btn["ativo"]
+                            if btn["ativo"]: botoes_lens[3]["ativo"] = False
+                        # -----------------------------------------------------
+                            
                         else:
                             btn["ativo"] = not btn["ativo"]
 
@@ -425,7 +514,28 @@ while True:
                     forma_selecionada.x += evento.rel[0]
                     forma_selecionada.y += evento.rel[1]
 
+        if gerenciador_menu.estado == "conceitos" and evento.type == pygame.MOUSEWHEEL:
+            gerenciador_menu.rolar_conceitos(-evento.y * 70)
+            continue
+
         if evento.type == pygame.KEYDOWN:
+            if gerenciador_menu.estado == "conceitos":
+                if evento.key in (pygame.K_DOWN, pygame.K_s):
+                    gerenciador_menu.rolar_conceitos(55)
+                elif evento.key in (pygame.K_UP, pygame.K_w):
+                    gerenciador_menu.rolar_conceitos(-55)
+                elif evento.key == pygame.K_PAGEDOWN:
+                    gerenciador_menu.rolar_conceitos(260)
+                elif evento.key == pygame.K_PAGEUP:
+                    gerenciador_menu.rolar_conceitos(-260)
+                elif evento.key == pygame.K_HOME:
+                    gerenciador_menu.rolar_conceitos(-gerenciador_menu.scroll_conceitos_max)
+                elif evento.key == pygame.K_END:
+                    gerenciador_menu.rolar_conceitos(gerenciador_menu.scroll_conceitos_max)
+                elif evento.key == pygame.K_ESCAPE:
+                    gerenciador_menu.estado = "menu"
+                continue
+
             # Atalhos de teclado só respondem se o laboratório sandbox estiver na tela
             if gerenciador_menu.estado == "sandbox":
                 if evento.key == pygame.K_z: 
@@ -446,7 +556,7 @@ while True:
                         matriz_depois_reset = matriz_fundo_original.copy()
                     else:
                         matriz_depois_reset = np.zeros((ALTURA_JOGO, LARGURA, 3), dtype=np.uint8)
-                        matriz_depois_reset[:, :] = COR_FUNDO
+                        matriz_depois_reset[:, :] = gerenciador_menu.obter_paleta_sandbox()["fundo"]
                     
                     logg.salvar_log_experimento("RESET_LABORATORIO_Z", matriz_antes_reset, matriz_depois_reset, histograma_cv.tom_selecionado, sliders)
                     histograma_cv.tom_selecionado = None
@@ -463,10 +573,13 @@ while True:
                 if evento.key == pygame.K_ESCAPE:
                     gerenciador_menu.estado = "menu"
 
+    aplicar_configuracoes_menu()
+
     # -------------------------------------------------------------------------
     # 🧱 ÁRVORE DE RENDERIZAÇÃO POR ESTADOS DE INTERFACE
     # -------------------------------------------------------------------------
     if gerenciador_menu.estado == "sandbox":
+        paleta = gerenciador_menu.obter_paleta_sandbox()
         histograma_cv.atualizar_arraste(pos_mouse, pygame.mouse.get_pressed())
         for s in sliders: s.atualizar(pos_mouse)
 
@@ -514,7 +627,7 @@ while True:
             surf_fundo = ins_img.converter_matriz_para_surface(matriz_fundo_original)
             if surf_fundo: surf_estagio.blit(surf_fundo, (0, 0))
         else:
-            surf_estagio.fill(COR_FUNDO)
+            surf_estagio.fill(paleta["fundo"])
 
         for f in formas:
             f.desenhar(surf_estagio, selecionada=(f == forma_selecionada))
@@ -536,6 +649,8 @@ while True:
             if botoes_lens[4]["ativo"]: matriz_cena = pdi.aplicar_filtro_mediana(matriz_cena)
             if botoes_lens[5]["ativo"]: matriz_cena = cv2.bitwise_not(matriz_cena)
             if botoes_lens[10]["ativo"]: matriz_cena = sm.aplicar_sobel_manual(matriz_cena)
+            if botoes_lens[11]["ativo"]: matriz_cena = fm.aplicar_pixelar_manual(matriz_cena, tamanho_bloco=15)
+            if botoes_lens[12]["ativo"]: matriz_cena = fm.aplicar_ruido_rgb_manual(matriz_cena, intensidade=60)
 
         if not forma_selecionada and not objeto_3d_cenario.selecionado:
             matriz_cena = matriz_cena.astype(np.float32)
@@ -569,41 +684,41 @@ while True:
         
         # Objetivo sempre visível no topo
         txt_sombra = FONTE_M.render("Objetivo: Teste dos filtros e as transformações geométricas nos objetos", True, (0, 0, 0))
-        txt_obj = FONTE_M.render("Objetivo: Teste dos filtros e as transformações geométricas nos objetos", True, (255, 255, 255))
+        txt_obj = FONTE_M.render("Objetivo: Teste dos filtros e as transformações geométricas nos objetos", True, paleta["texto"])
         tela.blit(txt_sombra, (21, 21))
         tela.blit(txt_obj, (20, 20))
 
         # Painel Inferior (HUD FIXA)
-        pygame.draw.rect(tela, (24, 24, 27), PANEL_CONTROLE)
-        pygame.draw.rect(tela, (0, 128, 255), PANEL_CONTROLE, width=2)
-        pygame.draw.line(tela, (50, 50, 60), (350, ALTURA_JOGO), (350, ALTURA), width=2)
-        pygame.draw.line(tela, (50, 50, 60), (800, ALTURA_JOGO), (800, ALTURA), width=2)
-        pygame.draw.line(tela, (50, 50, 60), (1050, ALTURA_JOGO), (1050, ALTURA), width=2)
+        pygame.draw.rect(tela, paleta["fundo_alt"], PANEL_CONTROLE)
+        pygame.draw.rect(tela, paleta["accent_azul"], PANEL_CONTROLE, width=2)
+        pygame.draw.line(tela, paleta["borda"], (350, ALTURA_JOGO), (350, ALTURA), width=2)
+        pygame.draw.line(tela, paleta["borda"], (800, ALTURA_JOGO), (800, ALTURA), width=2)
+        pygame.draw.line(tela, paleta["borda"], (1050, ALTURA_JOGO), (1050, ALTURA), width=2)
 
-        tela.blit(FONTE_M.render("LENS (Filtros & Ruídos)", True, (0, 128, 255)), (20, 495))
+        tela.blit(FONTE_M.render("LENS (Filtros & Ruídos)", True, paleta["accent_azul"]), (20, 495))
         for btn in botoes_lens:
-            cor = (0, 128, 255) if btn["ativo"] else ((70, 70, 80) if btn["rect"].collidepoint(pos_mouse) else (40, 40, 45))
+            cor = paleta["accent_azul"] if btn["ativo"] else ((paleta["botao_hover"] if btn["rect"].collidepoint(pos_mouse) else paleta["botao"]))
             if btn["id"] == 7 and lupa_cv.invertida: cor = (255, 120, 0)
             pygame.draw.rect(tela, cor, btn["rect"], border_radius=4)
-            pygame.draw.rect(tela, (90, 90, 100), btn["rect"], width=1, border_radius=4)
-            txt_n = FONTE_P.render(btn["nome"][:9], True, (255, 255, 255))
+            pygame.draw.rect(tela, paleta["borda"], btn["rect"], width=1, border_radius=4)
+            txt_n = FONTE_P.render(btn["nome"][:9], True, paleta["texto"])
             tela.blit(txt_n, (btn["rect"].x + 5, btn["rect"].y + 14))
 
         titulo_sliders = "Ajustes de Objeto Ativos" if (forma_selecionada or objeto_3d_cenario.selecionado) else "Ajustes Globais da Cena"
-        cor_titulo = (0, 255, 255) if objeto_3d_cenario.selecionado else ((255, 215, 0) if forma_selecionada else (255, 255, 255))
+        cor_titulo = (0, 255, 255) if objeto_3d_cenario.selecionado else ((255, 215, 0) if forma_selecionada else paleta["texto"])
         tela.blit(FONTE_M.render(titulo_sliders, True, cor_titulo), (370, 495))
         for s in sliders: s.desenhar(tela)
 
-        tela.blit(FONTE_M.render("Transformações", True, (255, 215, 0)), (820, 495))
+        tela.blit(FONTE_M.render("Transformações", True, paleta["accent_amarelo"]), (820, 495))
         if forma_selecionada or objeto_3d_cenario.selecionado:
-            tela.blit(FONTE_P.render("⟳ Rotação: Teclas Q <- -> E (ou Mouse no 3D)", True, (230, 230, 230)), (820, 540))
-            tela.blit(FONTE_P.render("⮂ Translação: Setas (ou Mouse no 2D)", True, (230, 230, 230)), (820, 580))
-            tela.blit(FONTE_P.render("⇲ Escala: Teclas R (+) e T (-)", True, (230, 230, 230)), (820, 620))
+            tela.blit(FONTE_P.render("⟳ Rotação: Teclas Q <- -> E (ou Mouse no 3D)", True, paleta["texto_suave"]), (820, 540))
+            tela.blit(FONTE_P.render("⮂ Translação: Setas (ou Mouse no 2D)", True, paleta["texto_suave"]), (820, 580))
+            tela.blit(FONTE_P.render("⇲ Escala: Teclas R (+) e T (-)", True, paleta["texto_suave"]), (820, 620))
         else:
-            tela.blit(FONTE_P.render("Selecione um objeto para", True, (120, 120, 120)), (820, 550))
-            tela.blit(FONTE_P.render("liberar transformações.", True, (120, 120, 120)), (820, 570))
+            tela.blit(FONTE_P.render("Selecione um objeto para", True, paleta["texto_suave"]), (820, 550))
+            tela.blit(FONTE_P.render("liberar transformações.", True, paleta["texto_suave"]), (820, 570))
 
-        tela.blit(FONTE_M.render("Histograma 2D", True, (255, 255, 255)), (1070, 495))
+        tela.blit(FONTE_M.render("Histograma 2D", True, paleta["texto"]), (1070, 495))
         histograma_cv.calcular_e_desenhar(tela, matriz_cena)
 
     elif gerenciador_menu.estado == "menu":

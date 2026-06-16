@@ -1,102 +1,186 @@
-# Vision Quest: The Filter Chronicles
+# Laboratório de Computação Visual — PDI com Pygame e OpenCV
 
-Um jogo de plataforma 2D interativo e linear desenvolvido como projeto prático para a disciplina de **Introdução à Computação Visual (CMC005) - UNIFEI**. O objetivo do jogo é guiar o personagem através de um corredor de desafios onde a progressão e a revelação de itens dependem diretamente da aplicação de técnicas de Processamento Digital de Imagens e Computação Gráfica.
+Projeto interativo desenvolvido em **Python** para demonstrar conceitos de **Computação Visual** e **Processamento Digital de Imagens (PDI)** em tempo real. A aplicação une uma interface gráfica feita com **Pygame**, processamento com **OpenCV/NumPy**, filtros manuais e um ambiente sandbox onde é possível aplicar efeitos, transformar objetos 2D/3D e analisar histogramas de cor.
 
----
+## Visão geral
 
-## 🎮 Mecânicas do Jogo e Diretrizes Atendidas
+A aplicação abre com uma tela de splash e, em seguida, apresenta um menu principal com acesso ao laboratório, instruções, configurações, informações do projeto e uma página de **Conceitos e Códigos**. O modo claro/escuro afeta apenas as telas de menu e documentação; o **sandbox permanece fixo no modo escuro**, mantendo o visual original do laboratório.
 
-O projeto foi projetado para cobrir os requisitos obrigatórios solicitados no escopo:
+No sandbox, o usuário pode manipular objetos 2D e um artefato 3D, aplicar filtros espaciais, testar filtros manuais, usar uma lupa local, inverter a lupa, alterar canais de cor, brilho, contraste e saturação, além de interagir com um histograma bidimensional.
 
-* **Objetos Gráficos e Interface:** O jogo conta com elementos 2D (personagem, plataformas, HUD) e uma cena de inspeção com objetos 3D renderizados em tempo real.
-* **Transformações Geométricas:** Uso de translação, rotação e escalonamento para inspecionar ou manipular elementos do cenário.
-* **Desafio 1 (Brilho e Contraste):** O jogador altera as propriedades de brilho e contraste da tela através de controles para revelar itens ocultos no cenário.
-* **Desafio 2 (Filtro de Linhas - Sobel Manual):** Ativação de um modo de visão que aplica a detecção de bordas de Sobel **implementada manualmente (sem funções prontas da biblioteca)** para destacar os contornos de plataformas ou chaves invisíveis.
-* **Desafio 3 (Manipulação de Cores e Histograma):** O jogador interage com o histograma de cores da cena capturada para neutralizar barreiras ou lasers coloridos.
-* **Desafio 4 (Filtro Espacial Local):** Uma "Lupa Mágica" controlada pelo cursor do mouse que aplica um filtro de suavização/mediana localmente, afetando apenas uma parte específica da cena para revelar o caminho seguro.
+## Funcionalidades principais
 
----
+- Menu principal com navegação entre telas.
+- Tela de configurações com ajuste de volume, mute, resolução e tema claro/escuro.
+- Sandbox visual com cenário, formas 2D e artefato 3D.
+- Tema claro/escuro nos menus e telas informativas.
+- Sandbox travado em tema escuro para preservar o visual do laboratório.
+- Página **Conceitos e Códigos** com rolagem e explicações dos algoritmos utilizados.
+- Splash screen inicial e ícone customizado da janela.
+- Música de fundo com troca automática de faixa, quando os arquivos `.ogg` estão disponíveis.
+- Exportação de logs de experimento ao resetar o laboratório.
 
-## 🛠️ Pré-requisitos e Instalação
+## Filtros e recursos de PDI disponíveis
 
-Antes de executar o projeto no VS Code, certifique-se de ter o Python instalado e as bibliotecas necessárias.
+Na HUD inferior do sandbox, a seção **LENS (Filtros & Ruídos)** disponibiliza:
 
-### 1. Clonar o Repositório
-```bash
-#git clone [https://github.com/Cheeshiiree/Vision-Quest.git](https://github.com/Cheeshiiree/Vision-Quest.git)
-#cd Vision-Quest
-#git clone [https://github.com/Cheeshiiree/Teste_Jogo_CompVisual.git](https://github.com/Cheeshiiree/Teste_Jogo_CompVisual.git)
-#cd Teste_Jogo_CompVisual
-```
+| Recurso | Tipo | Descrição |
+|---|---|---|
+| Cinza | OpenCV/PDI | Converte a cena para escala de cinza. |
+| Sobel OpenCV | OpenCV | Detecta bordas usando implementação de biblioteca. |
+| Desfocar | OpenCV | Aplica suavização/blur na imagem. |
+| S&P | OpenCV/PDI | Injeta ruído sal e pimenta. |
+| Mediana | OpenCV/PDI | Aplica filtro de mediana para reduzir ruídos. |
+| Inverter | OpenCV | Inverte os valores dos pixels da cena. |
+| Modo Lupa | Manual/local | Aplica efeitos apenas em uma região circular ao redor do mouse. |
+| Inv Lupa | Manual/local | Inverte a lógica da lupa, afetando a área externa ou interna conforme o modo. |
+| Img Fundo | Interface | Permite selecionar outra imagem de fundo. |
+| Reset | Sistema | Restaura filtros, objetos e ajustes do laboratório. |
+| Sobel Man | Manual | Executa o Sobel manual implementado no projeto. |
+| Pixelar | Manual | Divide a imagem em blocos e substitui cada bloco pela cor média. |
+| Ruído RGB | Manual | Soma ruído aleatório independente nos canais B, G e R. |
 
-###2. Criar um Ambiente Virtual (opcional, mas recomendado)
-```bash
-python -m venv venv
-source venv/bin/activate  # No Windows: venv\Scripts\activate
-```
+## Controles do sandbox
 
-###3. Instalar as Dependências
-Instale os pacotes sugeridos pelas diretrizes através do terminal:  Bash
-```bash
-pip install pygame PyOpenGL opencv-python numpy scikit-image
-```
-### 4. Estrutura de Arquivos Sugerida
-Para manter o desenvolvimento organizado no VS Code, utilize a seguinte árvore de diretórios:
-```plaintext
-<!-- Vision-Quest/ -->
+### Objetos 2D
+
+- Clique em uma forma 2D para selecioná-la.
+- Arraste com o mouse para mover.
+- Use as setas do teclado para transladar.
+- Use `Q` e `E` para rotacionar.
+- Use `R` para aumentar a escala/tamanho.
+- Use `T` para reduzir a escala/tamanho.
+
+### Artefato 3D
+
+- Clique no artefato 3D para selecioná-lo.
+- Arraste o mouse para rotacionar livremente.
+- Use as setas para transladar.
+- Use `Q` e `E` para rotação adicional.
+- Use `R` e `T` para aumentar ou reduzir a escala.
+
+### Atalhos gerais
+
+| Tecla | Ação |
+|---|---|
+| `X` | Regenera o laboratório e sorteia um novo modelo 3D. |
+| `Z` | Reseta o laboratório e exporta um log do experimento. |
+| `ESC` | Volta para o menu principal. |
+
+### Página Conceitos e Códigos
+
+A página de conceitos possui rolagem para acomodar explicações e trechos de código.
+
+| Controle | Ação |
+|---|---|
+| Roda do mouse | Rola a página. |
+| `↑` / `W` | Sobe o conteúdo. |
+| `↓` / `S` | Desce o conteúdo. |
+| `Page Up` | Sobe uma página. |
+| `Page Down` | Desce uma página. |
+| `Home` | Vai para o topo. |
+| `End` | Vai para o final. |
+| `ESC` | Retorna ao menu. |
+
+## Conceitos demonstrados
+
+O projeto foi organizado para apresentar conceitos práticos de computação visual:
+
+- Representação de imagens como matrizes NumPy.
+- Conversão entre `RGB` usado pelo Pygame e `BGR` usado pelo OpenCV.
+- Aplicação de filtros globais e locais.
+- Operações por canal de cor.
+- Máscaras circulares para lupa local.
+- Filtro Sobel manual por convolução.
+- Pixelização manual por blocos e média de cor.
+- Ruído RGB aditivo manual.
+- Ajuste de brilho, contraste e saturação.
+- Histograma por canal e ganho seletivo por faixa de intensidade.
+- Transformações geométricas em objetos 2D.
+- Projeção e rotação manual de objetos 3D.
+
+## Estrutura sugerida do projeto
+
+```text
 Teste_Jogo_CompVisual/
-│
+├── assets/
+│   ├── bgm/
+│   │   └── *.ogg
+│   └── sprites/
+│       └── misc/
+│           ├── Classroom 11.png
+│           ├── icon_janela.png
+│           └── splash_logo.png
 ├── src/
-│   ├── __init__.py
-│   ├── main.py             # Loop principal do Pygame e gerenciamento de estados
-│   ├── player.py           # Física de movimento, pulo e colisões do personagem
-│   ├── level.py            # Definição do mapa, plataformas e gatilhos dos desafios
-│   ├── filters.py          # Implementação dos filtros (OpenCV e o Sobel Manual)
-│   └── renderer_3d.py      # Lógica de renderização e transformações do PyOpenGL
-│
-├── assets/                 # Sprites, fontes e efeitos sonoros
-│
-├── README.md               # Documentação do projeto
-└── requirements.txt        # Lista de dependências do Python
+│   ├── greyboxing.py
+│   ├── ui.py
+│   ├── processamento_imagem.py
+│   ├── filtro_local.py
+│   ├── histograma.py
+│   ├── sobel_manual.py
+│   ├── filtros_manuais.py
+│   ├── inserir_imagens.py
+│   └── logger_pdi.py
+└── README.md
 ```
 
-### 🚀 Como Executar o Projeto de Teste
-* ** Abra a pasta raiz do projeto no VS Code.Certifique-se de que o interpretador Python esteja selecionado corretamente.
-* **Abra o arquivo src/main.py.
-* **Execute o arquivo diretamente pelo VS Code ou através do terminal integrado:
-```Bash
-python src/main.py
+## Papel de cada módulo
+
+| Arquivo | Função |
+|---|---|
+| `greyboxing.py` | Arquivo principal. Inicializa o Pygame, controla o loop, eventos, sandbox, filtros e renderização. |
+| `ui.py` | Controla menus, configurações, tela de sobre, conceitos/códigos, temas e paletas. |
+| `processamento_imagem.py` | Agrupa filtros e ajustes de imagem usados no laboratório. |
+| `filtro_local.py` | Implementa a lupa local e a lupa invertida. |
+| `histograma.py` | Calcula, desenha e permite interação com o histograma. |
+| `sobel_manual.py` | Implementa o filtro Sobel manual. |
+| `filtros_manuais.py` | Implementa o pixelar manual e o ruído RGB manual. |
+| `inserir_imagens.py` | Carrega e converte imagens de fundo entre matriz e superfície. |
+| `logger_pdi.py` | Salva logs dos experimentos realizados no sandbox. |
+
+## Requisitos
+
+- Python 3.10 ou superior.
+- Pygame.
+- NumPy.
+- OpenCV para Python.
+
+Instalação das dependências principais:
+
+```bash
+pip install pygame numpy opencv-python
 ```
 
-### ⏱️ Datas Importantes e Entrega
-**Entrega da aplicação:** Até o dia 15/06, às 23h59, via SIGAA.  
-**Apresentações:** Dias 16/06 e 18/06 (Duração máxima de 15 minutos por grupo, com a participação de todos os integrantes).  
-**Contato da Disciplina:** isadrummond@unifei.edu.br.  
+## Como executar
 
----
-## 📜 Instalações necessárias para rodar o projeto
-* **Python 3.x**: Instale usando o site oficial [python.org](https://www.python.org/downloads/).
-* **Pygame**: Para a criação do jogo e gerenciamento de eventos.
+Execute o projeto a partir da raiz do repositório, para que os caminhos relativos da pasta `assets/` funcionem corretamente:
+
 ```bash
-pip install pygame
+python src/greyboxing.py
 ```
-* **PyOpenGL**: Para renderização 3D em tempo real.
+
+Também é possível validar a sintaxe dos arquivos principais antes de executar:
+
 ```bash
-pip install PyOpenGL
+python -m py_compile src/greyboxing.py src/ui.py src/filtros_manuais.py
 ```
-* **OpenCV**: Para processamento de imagens e aplicação de filtros.
-```bash
-pip install opencv-python
-```
-* **NumPy**: Para manipulação de arrays e operações matemáticas.
-```bash
-pip install numpy
-```
-* **Scikit-Image**: Para filtros adicionais e manipulação de imagens.
-```bash
-pip install scikit-image
-```
-* **Pygame Pgzero**: Para teste de algumas funções.
-```bash
-pip install pgzero
-```
+
+## Observações importantes
+
+- A pasta `assets/` precisa estar no caminho esperado, pois o projeto carrega splash screen, ícone, imagem de fundo e músicas por caminhos relativos.
+- Caso não existam músicas `.ogg` em `assets/bgm/`, o laboratório continua funcionando, apenas sem trilha sonora.
+- Caso a splash screen ou o ícone não sejam encontrados, o programa apenas exibe um aviso e continua a execução.
+- O modo claro/escuro foi pensado para os menus e páginas informativas. O sandbox permanece escuro de propósito, para manter contraste com a HUD e os filtros visuais.
+
+## Integrantes
+
+Projeto desenvolvido para a disciplina **COM242 — Computação Visual / Processamento Digital de Imagens**.
+
+- Anna Beatryz Costa
+- Emilly Vitória Pereira da Silva
+- Julia Barcellos Paiva
+- Rafaela Cristina de Moraes Mendes
+
+## Licença
+
+Este repositório é voltado para fins acadêmicos e demonstração de conceitos de PDI. Caso deseje publicar formalmente o projeto, recomenda-se adicionar uma licença como MIT, Apache 2.0 ou outra definida pelo grupo.
